@@ -1,0 +1,22 @@
+import torch 
+import torchvision
+from torchvision.datasets import Cityscapes
+import torchvision.transforms as transforms
+from torch.utils.data import DataLoader
+
+
+# Define the data transformations
+transform = transforms.Compose([
+    transforms.ToTensor(),
+])
+
+# Set the root directory where Cityscapes dataset is stored
+root = 'cityscapes/'
+print(Cityscapes)
+train_dataset = Cityscapes(root, split='val', mode='coarse',
+                     target_type='semantic')
+train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True)
+
+# Accessing an example from the dataset
+sample = next(iter(train_loader))
+image, mask = sample['image'], sample['target']
