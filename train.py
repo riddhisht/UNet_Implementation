@@ -22,6 +22,7 @@ VAL_MASK_DIR = "Carvana/valid_masks"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 def train_fn(loader, model, optimizer, loss_fn, scaler):
+    print("Starting")
     loop = tqdm(loader)
 
     for batch_idx, (data, targets) in enumerate(loop):
@@ -29,8 +30,8 @@ def train_fn(loader, model, optimizer, loss_fn, scaler):
         targets = targets.float().unsqueeze(1).to(device=DEVICE)
 
         predictions = model(data)
-        loss = loss_fn(predictions, targets)
-
+        loss = nn.binary_cross_entropy_with_logits(predictions, targets)
+        loss = loss.sum()
         optimizer.zero_grad()
         scaler.scale(loss).backward()
         scaler.step(optimizer)
@@ -66,9 +67,8 @@ def main():
     )
 
     model = UNET(in_channels=3, out_channels=1).to(DEVICE)
-    loss_fn = nn.binary_cross_entropy_with_logits()
+    loss_fn = nn.binary_cross_entropy_with_logits
     optimzer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
-    print("---")
     train_loader, val_loader = get_loaders(
         TRAIN_IMG_DIR,
         TRAIN_MASK_DIR,
@@ -82,11 +82,9 @@ def main():
     )
     if LOAD_MODEL:
         load_checkpoint(torch.load("my_checkpoint.pth.tar"), model)
-    scaler = torch.cuda.amp.grad_scaler()
-    print("---")
+    scaler = torch.cuda.amp.GradScaler()
 
     for epoch in range(NUM_EPOCHS):
-        print("---")
 
         train_fn(train_loader, model, optimzer, loss_fn, scaler)
 
@@ -105,4 +103,5 @@ def main():
             val_loader, model, folder="saved_images/"
         )
 
-
+if __name__ == "__main__":
+    main()
